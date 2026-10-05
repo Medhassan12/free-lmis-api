@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Labour Market Information System (LMIS) Dashboard</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google Fonts - Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom pulse animation for skeleton loaders */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .5; }
+    }
+    .animate-skeleton {
+      animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- Top Navigation Header -->
+  <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="p-2.5 bg-brand-600/20 border border-brand-500/30 rounded-xl text-brand-500">
+          <i class="fa-solid fa-chart-line text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+            Labour Market Information System
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block mr-1 animate-pulse"></span> Live API
+            </span>
+          </h1>
+          <p class="text-xs text-slate-400">Real-time indicators directly from Supabase & Express API</p>
+        </div>
+      </div>
+
+      <!-- Header Actions -->
+      <div class="flex items-center space-x-3 w-full sm:w-auto justify-end">
+        <button id="refreshBtn" onclick="fetchData()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-lg border border-slate-700 transition-all flex items-center gap-2 shadow-sm active:scale-95">
+          <i id="refreshIcon" class="fa-solid fa-arrows-rotate"></i>
+          <span>Refresh Data</span>
+        </button>
+        <a href="https://free-lmis-api.onrender.com/observations" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium rounded-lg transition-all flex items-center gap-2 shadow-sm shadow-brand-600/20 active:scale-95">
+          <span>Raw Endpoint</span>
+          <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Dashboard Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Cold Start / Warning Banner -->
+    <div id="coldStartBanner" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-amber-200 flex items-start gap-3 transition-all">
+      <i class="fa-solid fa-circle-notch fa-spin text-amber-400 text-lg mt-0.5"></i>
+      <div class="text-sm">
+        <p class="font-semibold text-amber-300">Waking up API Instance...</p>
+        <p class="text-amber-200/80">Render's free web service spins down during inactivity. The initial request can take 20–50 seconds to warm up. Please hang tight!</p>
+      </div>
+    </div>
+
+    <!-- Error Alert Banner -->
+    <div id="errorBanner" class="hidden bg-rose-500/10 border border-rose-500/30 rounded-xl p-4 text-rose-200 flex items-start gap-3 transition-all">
+      <i class="fa-solid fa-triangle-exclamation text-rose-400 text-lg mt-0.5"></i>
+      <div class="text-sm flex-1">
+        <p class="font-semibold text-rose-300" id="errorTitle">Failed to fetch LMIS observations</p>
+        <p class="text-rose-200/80" id="errorMessage">Unable to reach the server. Please check your backend status.</p>
+      </div>
+      <button onclick="fetchData()" class="px-3 py-1 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 rounded text-xs font-semibold text-rose-200 transition-colors">
+        Retry
+      </button>
+    </div>
+
+    <!-- Metric Summary Cards -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Card 1 -->
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-5 backdrop-blur shadow-sm relative overflow-hidden group hover:border-slate-600 transition-all">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Observations</span>
+          <div class="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+            <i class="fa-solid fa-database"></i>
+          </div>
+        </div>
+        <div class="mt-3">
+          <p id="statTotalObs" class="text-3xl font-bold text-white tracking-tight">--</p>
+          <p class="text-xs text-slate-400 mt-1">Recorded database rows</p>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-5 backdrop-blur shadow-sm relative overflow-hidden group hover:border-slate-600 transition-all">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Countries Covered</span>
+          <div class="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
+            <i class="fa-solid fa-globe"></i>
+          </div>
+        </div>
+        <div class="mt-3">
+          <p id="statCountries" class="text-3xl font-bold text-white tracking-tight">--</p>
+          <p id="statCountriesSub" class="text-xs text-slate-400 mt-1">Unique geographic entities</p>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-5 backdrop-blur shadow-sm relative overflow-hidden group hover:border-slate-600 transition-all">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Latest Year</span>
+          <div class="p-2 bg-amber-500/10 rounded-lg text-amber-400">
+            <i class="fa-solid fa-calendar-days"></i>
+          </div>
+        </div>
+        <div class="mt-3">
+          <p id="statLatestYear" class="text-3xl font-bold text-white tracking-tight">--</p>
+          <p class="text-xs text-slate-400 mt-1">Most recent labor metrics</p>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-5 backdrop-blur shadow-sm relative overflow-hidden group hover:border-slate-600 transition-all">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Avg Indicator Value</span>
+          <div class="p-2 bg-purple-500/10 rounded-lg text-purple-400">
+            <i class="fa-solid fa-calculator"></i>
+          </div>
+        </div>
+        <div class="mt-3">
+          <p id="statAvgValue" class="text-3xl font-bold text-white tracking-tight">--</p>
+          <p class="text-xs text-slate-400 mt-1">Mean metric value</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Analytics Chart Section -->
+    <section class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 backdrop-blur shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-700/60 gap-2">
+        <div>
+          <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+            <i class="fa-solid fa-chart-column text-brand-500"></i>
+            Labor Indicators Trend
+          </h2>
+          <p class="text-xs text-slate-400">Visualizing observation metric values across reported survey years</p>
+        </div>
+      </div>
+      <div class="mt-6 relative h-64 sm:h-72 w-full">
+        <canvas id="lmisChart"></canvas>
+      </div>
+    </section>
+
+    <!-- Interactive Table & Toolbar -->
+    <section class="bg-slate-800/60 border border-slate-700/60 rounded-2xl backdrop-blur shadow-sm overflow-hidden">
+      
+      <!-- Toolbar Filter Controls -->
+      <div class="p-5 border-b border-slate-700/60 space-y-4">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          
+          <!-- Search Box -->
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Search country name, indicator code..." class="w-full bg-slate-900/80 border border-slate-700 focus:border-brand-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-400 outline-none transition-all">
+          </div>
+
+          <!-- Dropdown Filters & Reset -->
+          <div class="flex flex-wrap items-center gap-3">
+            
+            <!-- Country Filter -->
+            <select id="countryFilter" onchange="applyFilters()" class="bg-slate-900/80 border border-slate-700 focus:border-brand-500 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none transition-all">
+              <option value="">All Countries</option>
+            </select>
+
+            <!-- Year Filter -->
+            <select id="yearFilter" onchange="applyFilters()" class="bg-slate-900/80 border border-slate-700 focus:border-brand-500 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none transition-all">
+              <option value="">All Years</option>
+            </select>
+
+            <!-- Indicator Filter -->
+            <select id="indicatorFilter" onchange="applyFilters()" class="bg-slate-900/80 border border-slate-700 focus:border-brand-500 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 outline-none transition-all">
+              <option value="">All Indicators</option>
+            </select>
+
+            <!-- Reset Button -->
+            <button onclick="resetFilters()" class="px-3.5 py-2.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-xl border border-slate-600 transition-all flex items-center gap-2">
+              <i class="fa-solid fa-filter-circle-xmark text-xs"></i>
+              <span>Reset</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="overflow-x-auto min-w-full">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-900/60 border-b border-slate-700/60 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <th onclick="sortTable('id')" class="py-3.5 px-4 cursor-pointer hover:text-slate-200 transition-colors">
+                ID <i class="fa-solid fa-sort text-slate-600 ml-1"></i>
+              </th>
+              <th onclick="sortTable('indicator_code')" class="py-3.5 px-4 cursor-pointer hover:text-slate-200 transition-colors">
+                Indicator <i class="fa-solid fa-sort text-slate-600 ml-1"></i>
+              </th>
+              <th onclick="sortTable('country_name')" class="py-3.5 px-4 cursor-pointer hover:text-slate-200 transition-colors">
+                Country <i class="fa-solid fa-sort text-slate-600 ml-1"></i>
+              </th>
+              <th onclick="sortTable('year')" class="py-3.5 px-4 cursor-pointer hover:text-slate-200 transition-colors">
+                Year <i class="fa-solid fa-sort text-slate-600 ml-1"></i>
+              </th>
+              <th onclick="sortTable('value')" class="py-3.5 px-4 cursor-pointer hover:text-slate-200 transition-colors">
+                Value <i class="fa-solid fa-sort text-slate-600 ml-1"></i>
+              </th>
+              <th onclick="sortTable('created_at')" class="py-3.5 px-4 cursor-pointer hover:text-slate-200 transition-colors">
+                Recorded Date <i class="fa-solid fa-sort text-slate-600 ml-1"></i>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-slate-700/40 text-sm text-slate-200">
+            <!-- Loading Skeleton Rows Default -->
+            <tr class="animate-skeleton">
+              <td class="py-4 px-4"><div class="h-4 bg-slate-700/60 rounded w-8"></div></td>
+              <td class="py-4 px-4"><div class="h-6 bg-slate-700/60 rounded-full w-24"></div></td>
+              <td class="py-4 px-4"><div class="h-4 bg-slate-700/60 rounded w-28"></div></td>
+              <td class="py-4 px-4"><div class="h-4 bg-slate-700/60 rounded w-12"></div></td>
+              <td class="py-4 px-4"><div class="h-4 bg-slate-700/60 rounded w-16"></div></td>
+              <td class="py-4 px-4"><div class="h-4 bg-slate-700/60 rounded w-32"></div></td>
+            </tr>
+            <tr class="animate-skeleton">
+              <td class="py-4 px-4"><div class="h-4 bg-slate-700/60 rounded w-8"></div></td>
+              <td class="py-4 px-4"><div class="h-6 bg-slate-700/60 rounded-full w-24"></div></td>
+              <td class="py-4 px-4"><div class="h-4 bg-slate-700/60 rounded w-28"></div></td>
+              <td class="py-4 px-4"><div class="h-4 bg-slate-700/60 rounded w-12"></div></td>
+              <td class="py-4 px-4"><div class="h-4 bg-slate-700/60 rounded w-16"></div></td>
+              <td class="py-4 px-4"><div class="h-4 bg-slate-700/60 rounded w-32"></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Table Footer / Count -->
+      <div class="px-5 py-3 border-t border-slate-700/60 bg-slate-900/40 flex items-center justify-between text-xs text-slate-400">
+        <span id="recordCountText">Showing 0 observations</span>
+        <span>Source: <strong class="text-slate-300">Free LMIS Supabase Database</strong></span>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script>
+    const API_URL = 'https://free-lmis-api.onrender.com/observations';
+    
+    // Application State
+    let rawData = [];
+    let filteredData = [];
+    let chartInstance = null;
+    let sortColumn = 'id';
+    let sortAscending = true;
+
+    // DOM Elements
+    const tableBody = document.getElementById('tableBody');
+    const searchInput = document.getElementById('searchInput');
+    const countryFilter = document.getElementById('countryFilter');
+    const yearFilter = document.getElementById('yearFilter');
+    const indicatorFilter = document.getElementById('indicatorFilter');
+    const coldStartBanner = document.getElementById('coldStartBanner');
+    const errorBanner = document.getElementById('errorBanner');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const refreshIcon = document.getElementById('refreshIcon');
+
+    // Fetch data on initial load
+    window.onload = function() {
+      fetchData();
+    };
+
+    // Main API Fetch function
+    async function fetchData() {
+      // Reset State & Show Spinners
+      showLoadingState(true);
+      hideBanners();
+
+      // Set timeout detection for Render wake up cold start
+      const coldStartTimer = setTimeout(() => {
+        coldStartBanner.classList.remove('hidden');
+      }, 3000);
+
+      try {
+        const response = await fetch(API_URL);
+        clearTimeout(coldStartTimer);
+        coldStartBanner.classList.add('hidden');
+
+        if (!response.ok) {
+          throw new Error(`Server returned status code: ${response.status}`);
+        }
+
+        const data = await response.json();
+        rawData = Array.isArray(data) ? data : [];
+        filteredData = [...rawData];
+
+        // Populate Dropdowns & Render Content
+        populateFilterDropdowns();
+        updateMetrics();
+        renderChart();
+        applyFilters();
+
+      } catch (err) {
+        clearTimeout(coldStartTimer);
+        coldStartBanner.classList.add('hidden');
+        showErrorBanner(err.message || 'Error connecting to API endpoint.');
+        renderEmptyTable('Failed to load observations from live API.');
+      } finally {
+        showLoadingState(false);
+      }
+    }
+
+    // Populate dropdown options dynamically from dataset
+    function populateFilterDropdowns() {
+      const countries = [...new Set(rawData.map(item => item.country_name).filter(Boolean))].sort();
+      const years = [...new Set(rawData.map(item => item.year).filter(Boolean))].sort((a,b) => b - a);
+      const indicators = [...new Set(rawData.map(item => item.indicator_code).filter(Boolean))].sort();
+
+      // Country options
+      countryFilter.innerHTML = '<option value="">All Countries</option>' + 
+        countries.map(c => `<option value="${c}">${c}</option>`).join('');
+
+      // Year options
+      yearFilter.innerHTML = '<option value="">All Years</option>' + 
+        years.map(y => `<option value="${y}">${y}</option>`).join('');
+
+      // Indicator options
+      indicatorFilter.innerHTML = '<option value="">All Indicators</option>' + 
+        indicators.map(i => `<option value="${i}">${i}</option>`).join('');
+    }
+
+    // Apply Client-side Filtering
+    function applyFilters() {
+      const searchTerm = searchInput.value.toLowerCase().trim();
+      const selectedCountry = countryFilter.value;
+      const selectedYear = yearFilter.value;
+      const selectedIndicator = indicatorFilter.value;
+
+      filteredData = rawData.filter(item => {
+        const matchesSearch = !searchTerm || 
+          (item.country_name && item.country_name.toLowerCase().includes(searchTerm)) ||
+          (item.indicator_code && item.indicator_code.toLowerCase().includes(searchTerm)) ||
+          (item.id && item.id.toString().includes(searchTerm));
+
+        const matchesCountry = !selectedCountry || item.country_name === selectedCountry;
+        const matchesYear = !selectedYear || item.year == selectedYear;
+        const matchesIndicator = !selectedIndicator || item.indicator_code === selectedIndicator;
+
+        return matchesSearch && matchesCountry && matchesYear && matchesIndicator;
+      });
+
+      renderTable();
+      updateRecordCountText();
+    }
+
+    // Reset filters
+    function resetFilters() {
+      searchInput.value = '';
+      countryFilter.value = '';
+      yearFilter.value = '';
+      indicatorFilter.value = '';
+      applyFilters();
+    }
+
+    // Render Data Table
+    function renderTable() {
+      if (filteredData.length === 0) {
+        renderEmptyTable('No observations match your query filters.');
+        return;
+      }
+
+      // Sort data
+      filteredData.sort((a, b) => {
+        let valA = a[sortColumn];
+        let valB = b[sortColumn];
+
+        if (valA === null || valA === undefined) valA = '';
+        if (valB === null || valB === undefined) valB = '';
+
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          return sortAscending ? valA - valB : valB - valA;
+        }
+
+        return sortAscending 
+          ? String(valA).localeCompare(String(valB)) 
+          : String(valB).localeCompare(String(valA));
+      });
+
+      tableBody.innerHTML = filteredData.map(row => {
+        const formattedDate = row.created_at 
+          ? new Date(row.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+          : 'N/A';
+
+        const valueFormatted = typeof row.value === 'number' ? row.value.toFixed(1) : (row.value || 'N/A');
+
+        return `
+          <tr class="hover:bg-slate-700/30 transition-colors">
+            <td class="py-3.5 px-4 font-mono text-xs text-slate-400">#${row.id}</td>
+            <td class="py-3.5 px-4">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-400 border border-brand-500/20">
+                ${row.indicator_code || 'UNSPECIFIED'}
+              </span>
+            </td>
+            <td class="py-3.5 px-4 font-medium text-slate-100 flex items-center gap-2">
+              <i class="fa-solid fa-location-dot text-slate-500 text-xs"></i>
+              ${row.country_name || 'N/A'}
+            </td>
+            <td class="py-3.5 px-4 text-slate-300 font-mono">${row.year || 'N/A'}</td>
+            <td class="py-3.5 px-4 font-semibold text-emerald-400">${valueFormatted}${row.indicator_code === 'EMP_RATE' ? '%' : ''}</td>
+            <td class="py-3.5 px-4 text-xs text-slate-400">${formattedDate}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Sort Table Column Trigger
+    function sortTable(column) {
+      if (sortColumn === column) {
+        sortAscending = !sortAscending;
+      } else {
+        sortColumn = column;
+        sortAscending = true;
+      }
+      renderTable();
+    }
+
+    // Update Top Stat Cards
+    function updateMetrics() {
+      document.getElementById('statTotalObs').innerText = rawData.length;
+
+      const countries = [...new Set(rawData.map(d => d.country_name).filter(Boolean))];
+      document.getElementById('statCountries').innerText = countries.length;
+
+      const years = rawData.map(d => d.year).filter(Boolean);
+      const maxYear = years.length > 0 ? Math.max(...years) : '--';
+      document.getElementById('statLatestYear').innerText = maxYear;
+
+      const values = rawData.map(d => d.value).filter(v => typeof v === 'number');
+      const avgValue = values.length > 0 
+        ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1) + '%'
+        : '--';
+      document.getElementById('statAvgValue').innerText = avgValue;
+    }
+
+    // Render Analytics Chart
+    function renderChart() {
+      const ctx = document.getElementById('lmisChart').getContext('2d');
+
+      // Aggregate data by Year / Country
+      const sortedData = [...rawData].sort((a,b) => (a.year || 0) - (b.year || 0));
+      const labels = sortedData.map(d => `${d.country_name || 'Item'} (${d.year || 'N/A'})`);
+      const values = sortedData.map(d => d.value || 0);
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Indicator Value (%)',
+            data: values,
+            backgroundColor: 'rgba(14, 165, 233, 0.4)',
+            borderColor: 'rgba(14, 165, 233, 1)',
+            borderWidth: 2,
+            borderRadius: 8,
+            hoverBackgroundColor: 'rgba(14, 165, 233, 0.7)',
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: { color: '#94a3b8', font: { family: 'Inter', size: 12 } }
+            },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleColor: '#f8fafc',
+              bodyColor: '#e2e8f0',
+              borderColor: '#334155',
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 8
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 } }
+            },
+            y: {
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 } },
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    // Helper UI functions
+    function showLoadingState(isLoading) {
+      if (isLoading) {
+        refreshIcon.classList.add('fa-spin');
+        refreshBtn.disabled = true;
+      } else {
+        refreshIcon.classList.remove('fa-spin');
+        refreshBtn.disabled = false;
+      }
+    }
+
+    function renderEmptyTable(message) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="6" class="py-12 text-center text-slate-400">
+            <i class="fa-solid fa-folder-open text-3xl mb-3 text-slate-600 block"></i>
+            <p class="text-sm font-medium">${message}</p>
+          </td>
+        </tr>
+      `;
+      updateRecordCountText();
+    }
+
+    function updateRecordCountText() {
+      document.getElementById('recordCountText').innerText = `Showing ${filteredData.length} of ${rawData.length} observations`;
+    }
+
+    function showErrorBanner(msg) {
+      document.getElementById('errorMessage').innerText = msg;
+      errorBanner.classList.remove('hidden');
+    }
+
+    function hideBanners() {
+      coldStartBanner.classList.add('hidden');
+      errorBanner.classList.add('hidden');
+    }
+  </script>
+
+</body>
+</html>
