@@ -5,7 +5,7 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Enable CORS for all origins and methods
+// Enable CORS for all origins and HTTP methods
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -14,7 +14,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// Supabase client initialization
+// Supabase Initialization
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 
@@ -22,20 +22,18 @@ let supabase;
 if (supabaseUrl && supabaseKey) {
   supabase = createClient(supabaseUrl, supabaseKey);
 } else {
-  console.warn("WARNING: SUPABASE_URL or SUPABASE_KEY environment variables are missing!");
+  console.warn("WARNING: SUPABASE_URL or SUPABASE_KEY is missing!");
 }
 
-// Health Check
+// Root Endpoint
 app.get('/', (req, res) => {
   res.json({ message: 'Djibouti LMIS API is running' });
 });
 
-// GET Observations
+// GET /observations
 app.get('/observations', async (req, res) => {
   try {
-    if (!supabase) {
-      return res.status(500).json({ error: 'Supabase client not initialized' });
-    }
+    if (!supabase) return res.status(500).json({ error: 'Supabase client not initialized' });
     const { data, error } = await supabase.from('observations').select('*');
     if (error) throw error;
     res.json(data);
@@ -45,11 +43,11 @@ app.get('/observations', async (req, res) => {
   }
 });
 
-// POST New Observation
+// POST /observations (FIXES THE 404 ERROR)
 app.post('/observations', async (req, res) => {
   try {
     if (!supabase) {
-      return res.status(500).json({ error: 'Supabase client not initialized' });
+      return res.status(500).json({ detail: 'Supabase client not initialized' });
     }
 
     const { 
@@ -62,7 +60,6 @@ app.post('/observations', async (req, res) => {
       subdivision 
     } = req.body;
 
-    // Support both field names (subdivision_code or subdivision)
     const newRecord = {
       institution_code: institution_code || 'UNKNOWN',
       indicator_code: indicator_code || 'UNKNOWN',
