@@ -221,7 +221,7 @@
 
         async function fetchObservations() {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/observations`);
+                const response = await fetch(`${API_BASE_URL}/observations`)
                 const data = await response.json();
                 
                 if (data && Array.isArray(data)) {
