@@ -82,11 +82,17 @@
       </div>
     </div>
 
-    <!-- Filters Section -->
+    <!-- Filters & Export Section -->
     <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 backdrop-blur space-y-4">
-      <div class="flex items-center space-x-2 text-sm font-semibold text-slate-300">
-        <i data-lucide="filter" class="w-4 h-4 text-indigo-400"></i>
-        <span>Filter Observations</span>
+      <div class="flex justify-between items-center">
+        <div class="flex items-center space-x-2 text-sm font-semibold text-slate-300">
+          <i data-lucide="filter" class="w-4 h-4 text-indigo-400"></i>
+          <span>Filter Observations</span>
+        </div>
+        <button id="exportCsvBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition-colors">
+          <i data-lucide="download" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span>Export CSV</span>
+        </button>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
@@ -209,6 +215,7 @@
   <script>
     const API_BASE_URL = 'https://free-lmis-api.onrender.com';
     let allObservations = [];
+    let currentFilteredData = [];
 
     // 1. Fetch Observations from API
     async function fetchObservations() {
@@ -220,6 +227,7 @@
 
         if (data && Array.isArray(data)) {
           allObservations = data;
+          currentFilteredData = [...allObservations];
           renderTable(allObservations);
           updateStats(allObservations);
           if (typeof Chart !== 'undefined') renderChart(allObservations);
@@ -349,7 +357,7 @@
       const indicatorVal = document.getElementById('indicatorFilter')?.value.toLowerCase().trim() || '';
       const yearVal = document.getElementById('yearFilter')?.value.trim() || '';
 
-      const filtered = allObservations.filter(obs => {
+      currentFilteredData = allObservations.filter(obs => {
         const matchInst = !instVal || obs.institution_code === instVal;
         const matchIndicator = !indicatorVal || (obs.indicator_code && obs.indicator_code.toLowerCase().includes(indicatorVal));
         const matchYear = !yearVal || String(obs.year) === yearVal;
@@ -357,9 +365,9 @@
         return matchInst && matchIndicator && matchYear;
       });
 
-      renderTable(filtered);
-      updateStats(filtered);
-      if (typeof Chart !== 'undefined') renderChart(filtered);
+      renderTable(currentFilteredData);
+      updateStats(currentFilteredData);
+      if (typeof Chart !== 'undefined') renderChart(currentFilteredData);
     }
 
     // Attach Filter Event Listeners
@@ -367,7 +375,34 @@
     document.getElementById('indicatorFilter')?.addEventListener('input', applyFilters);
     document.getElementById('yearFilter')?.addEventListener('input', applyFilters);
 
-    // 7. Modal Open & Close Event Listeners
+    // 7. CSV Export Logic
+    document.getElementById('exportCsvBtn')?.addEventListener('click', () => {
+      if (!currentFilteredData || currentFilteredData.length === 0) {
+        alert('No data available to export.');
+        return;
+      }
+
+      const headers = ['Institution', 'Indicator', 'Year', 'Value', 'Sex', 'Subdivision'];
+      const rows = currentFilteredData.map(obs => [
+        `"${obs.institution_code || ''}"`,
+        `"${obs.indicator_code || ''}"`,
+        obs.year || '',
+        obs.value || 0,
+        `"${obs.sex || 'TOTAL'}"`,
+        `"${obs.subdivision_code || 'NATIONAL'}"`
+      ]);
+
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `djibouti_lmis_observations_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    // 8. Modal Open & Close Event Listeners
     const modal = document.getElementById('ingestModal');
     const openModalBtn = document.getElementById('openModalBtn');
     const closeModalBtn = document.getElementById('closeModalBtn');
@@ -384,7 +419,7 @@
     if (closeModalBtn) closeModalBtn.addEventListener('click', () => toggleModal(false));
     if (cancelModalBtn) cancelModalBtn.addEventListener('click', () => toggleModal(false));
 
-    // 8. Handle Form Submission (POST to API)
+    // 9. Handle Form Submission (POST to API)
     document.getElementById('ingestForm')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       
