@@ -209,100 +209,157 @@
     </div>
 
     <script>
-        // Set API endpoint URL (Update when API backend is hosted on Render/Vercel)
-        const API_BASE_URL = 'https://free-lmis-api.onrender.com';
+  const API_BASE_URL = 'https://free-lmis-api.onrender.com';
+  let allObservations = []; // Global variable storing the loaded API data
 
-        let lmisChartInstance = null;
+  // 1. Fetch data on page load
+  async function fetchObservations() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/observations`);
+      const data = await response.json();
 
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchObservations();
-            setupModalListeners();
-        });
+      if (data && Array.isArray(data)) {
+        allObservations = data;
+        renderTable(allObservations);
+        updateStats(allObservations);
+        renderChart(allObservations);
+        populateInstitutionFilter(allObservations);
+        
+        // Update API status indicator
+        document.getElementById('apiStatus').innerHTML = `
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            Connected
+          </span>`;
+      }
+    } catch (err) {
+      console.warn("Backend API offline or unreachable", err);
+      document.getElementById('observationsTableBody').innerHTML = 
+        `<tr><td colspan="6" class="text-center py-4 text-slate-400">Unable to load observations from API.</td></tr>`;
+      document.getElementById('apiStatus').innerHTML = `
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
+          Disconnected
+        </span>`;
+    }
+  }
 
-        async function fetchObservations() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/observations`)
-                const data = await response.json();
-                
-                if (data && Array.isArray(data)) {
-                    renderTable(data);
-                    updateStats(data);
-                    renderChart(data);
-                }
-            } catch (err) {
-                console.warn("Backend API not reachable. Showing placeholder structure.");
-                document.getElementById('observationsTableBody').innerHTML = `
-                    <tr><td colspan="6" class="px-5 py-6 text-center text-amber-400">Backend API offline. Host API server on Render/Vercel to connect Supabase.</td></tr>
-                `;
-            }
+  // 2. Dynamic Dropdown Population
+  function populateInstitutionFilter(data) {
+    const select = document.getElementById('institutionFilter');
+    if (!select) return;
+
+    // Extract unique institution codes
+    const institutions = [...new Set(data.map(item => item.institution_code).filter(Boolean))];
+    
+    select.innerHTML = `<option value="">All Institutions</option>` + 
+      institutions.map(inst => `<option value="${inst}">${inst}</option>`).join('');
+  }
+
+  // 3. Render Observations Table
+  function renderTable(data) {
+    const tbody = document.getElementById('observationsTableBody');
+    if (!tbody) return;
+
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-slate-400">No matching observations found.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map(obs => `
+      <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+        <td class="py-3 px-4 font-mono text-xs text-indigo-400">${obs.institution_code || '-'}</td>
+        <td class="py-3 px-4 font-semibold text-slate-200">${obs.indicator_code || '-'}</td>
+        <td class="py-3 px-4 text-slate-300">${obs.year || '-'}</td>
+        <td class="py-3 px-4 font-bold text-white">${Number(obs.value).toLocaleString()}</td>
+        <td class="py-3 px-4 text-slate-400 text-xs">${obs.sex || 'TOTAL'}</td>
+        <td class="py-3 px-4 text-slate-400 text-xs">${obs.subdivision_code || 'NATIONAL'}</td>
+      </tr>
+    `).join('');
+  }
+
+  // 4. Update Summary Stat Cards
+  function updateStats(data) {
+    const totalObs = document.getElementById('totalObservations');
+    const totalInst = document.getElementById('totalInstitutions');
+    const latestYr = document.getElementById('latestYear');
+
+    if (totalObs) totalObs.textContent = data.length;
+    if (totalInst) {
+      const uniqueInsts = new Set(data.map(d => d.institution_code).filter(Boolean));
+      totalInst.textContent = uniqueInsts.size;
+    }
+    if (latestYr) {
+      const years = data.map(d => Number(d.year)).filter(Boolean);
+      latestYr.textContent = years.length > 0 ? Math.max(...years) : '-';
+    }
+  }
+
+  // 5. Update Chart.js Visualization
+  let myChart = null;
+  function renderChart(data) {
+    const ctx = document.getElementById('observationsChart')?.getContext('2d');
+    if (!ctx) return;
+
+    // Group values by year
+    const yearTotals = {};
+    data.forEach(item => {
+      const yr = item.year || 'Unknown';
+      yearTotals[yr] = (yearTotals[yr] || 0) + Number(item.value || 0);
+    });
+
+    const labels = Object.keys(yearTotals).sort();
+    const chartValues = labels.map(yr => yearTotals[yr]);
+
+    if (myChart) myChart.destroy(); // Destroy previous instance to re-render
+
+    myChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Total Value by Year',
+          data: chartValues,
+          backgroundColor: '#6366f1',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+          y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
         }
+      }
+    });
+  }
 
-        function renderTable(data) {
-            const tbody = document.getElementById('observationsTableBody');
-            tbody.innerHTML = '';
+  // 6. Filter Functionality Event Listener
+  function applyFilters() {
+    const instVal = document.getElementById('institutionFilter')?.value || '';
+    const indicatorVal = document.getElementById('indicatorFilter')?.value.toLowerCase().trim() || '';
+    const yearVal = document.getElementById('yearFilter')?.value.trim() || '';
 
-            data.forEach(item => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-800/40 transition';
-                tr.innerHTML = `
-                    <td class="px-5 py-3 text-slate-400 font-mono text-xs">${item.id || '--'}</td>
-                    <td class="px-5 py-3 font-medium text-white">${item.institution_code || '--'}</td>
-                    <td class="px-5 py-3 text-indigo-400 font-mono text-xs">${item.indicator_code || '--'}</td>
-                    <td class="px-5 py-3">${item.year || '--'}</td>
-                    <td class="px-5 py-3 font-semibold text-emerald-400">${item.value || 0}</td>
-                    <td class="px-5 py-3 text-xs text-slate-400">${item.gender || 'TOTAL'}</td>
-                `;
-                tbody.appendChild(tr);
-            });
+    const filtered = allObservations.filter(obs => {
+      const matchInst = !instVal || obs.institution_code === instVal;
+      const matchIndicator = !indicatorVal || (obs.indicator_code && obs.indicator_code.toLowerCase().includes(indicatorVal));
+      const matchYear = !yearVal || String(obs.year) === yearVal;
 
-            document.getElementById('recordCountText').textContent = `Showing ${data.length} observations`;
-        }
+      return matchInst && matchIndicator && matchYear;
+    });
 
-        function updateStats(data) {
-            document.getElementById('statTotalObs').textContent = data.length;
-            const insts = new Set(data.map(d => d.institution_code)).size;
-            document.getElementById('statTotalInst').textContent = insts || 1;
-            const years = data.map(d => d.year).filter(Boolean);
-            document.getElementById('statLatestYear').textContent = years.length ? Math.max(...years) : '--';
-        }
+    renderTable(filtered);
+    updateStats(filtered);
+    renderChart(filtered);
+  }
 
-        function renderChart(data) {
-            const ctx = document.getElementById('lmisChart').getContext('2d');
-            const labels = data.slice(0, 10).map(d => `${d.indicator_code || 'IND'} (${d.year || ''})`);
-            const values = data.slice(0, 10).map(d => d.value || 0);
+  // Attach event listeners to filter controls
+  document.getElementById('institutionFilter')?.addEventListener('change', applyFilters);
+  document.getElementById('indicatorFilter')?.addEventListener('input', applyFilters);
+  document.getElementById('yearFilter')?.addEventListener('input', applyFilters);
 
-            if (lmisChartInstance) lmisChartInstance.destroy();
-
-            lmisChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Value',
-                        data: values,
-                        backgroundColor: 'rgba(99, 102, 241, 0.6)',
-                        borderColor: 'rgba(99, 102, 241, 1)',
-                        borderWidth: 1,
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { grid: { color: 'rgba(255, 255, 255, 0.1)' } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-        }
-
-        function setupModalListeners() {
-            const modal = document.getElementById('ingestModal');
-            document.getElementById('openIngestModalBtn').addEventListener('click', () => modal.classList.remove('hidden'));
-            document.getElementById('closeIngestModalBtn').addEventListener('click', () => modal.classList.add('hidden'));
-        }
-    </script>
+  // Initial load
+  document.addEventListener('DOMContentLoaded', fetchObservations);
+</script>
 </body>
 </html>
