@@ -183,7 +183,7 @@
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-300 mb-1">Value *</label>
-            <input type="number" id="modalValue" placeholder="12500" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+            <input type="number" step="any" id="modalValue" placeholder="12500" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
@@ -280,9 +280,9 @@
           <td class="py-3 px-4 font-mono text-xs text-indigo-400">${obs.institution_code || '-'}</td>
           <td class="py-3 px-4 font-semibold text-slate-200">${obs.indicator_code || '-'}</td>
           <td class="py-3 px-4 text-slate-300">${obs.year || '-'}</td>
-          <td class="py-3 px-4 font-bold text-white">${Number(obs.value).toLocaleString('en-US')}</td>
+          <td class="py-3 px-4 font-bold text-white">${Number(obs.value || 0).toLocaleString('en-US')}</td>
           <td class="py-3 px-4 text-slate-400 text-xs">${obs.sex || 'TOTAL'}</td>
-          <td class="py-3 px-4 text-slate-400 text-xs">${obs.subdivision_code || 'NATIONAL'}</td>
+          <td class="py-3 px-4 text-slate-400 text-xs">${obs.subdivision_code || obs.subdivision || 'NATIONAL'}</td>
         </tr>
       `).join('');
     }
@@ -389,7 +389,7 @@
         obs.year || '',
         obs.value || 0,
         `"${obs.sex || 'TOTAL'}"`,
-        `"${obs.subdivision_code || 'NATIONAL'}"`
+        `"${obs.subdivision_code || obs.subdivision || 'NATIONAL'}"`
       ]);
 
       const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
@@ -424,7 +424,10 @@
       e.preventDefault();
       
       const submitBtn = document.getElementById('submitIngestBtn');
-      if (submitBtn) submitBtn.disabled = true;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+      }
 
       const payload = {
         institution_code: document.getElementById('modalInst').value.trim(),
@@ -438,19 +441,39 @@
       try {
         const response = await fetch(`${API_BASE_URL}/observations`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
           body: JSON.stringify(payload)
         });
 
-        if (!response.ok) throw new Error('Failed to submit data');
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          // Format FastAPI validation errors nicely if returned
+          let errorMsg = `Server status ${response.status}`;
+          if (errData.detail) {
+            if (Array.isArray(errData.detail)) {
+              errorMsg = errData.detail.map(d => `${d.loc.join('.')}: ${d.msg}`).join(', ');
+            } else {
+              errorMsg = errData.detail;
+            }
+          }
+          throw new Error(errorMsg);
+        }
 
         toggleModal(false);
         document.getElementById('ingestForm').reset();
         await fetchObservations(); // Refresh dashboard data
+        alert('Observation added successfully!');
       } catch (err) {
+        console.error('Ingest Error Details:', err);
         alert('Error submitting observation: ' + err.message);
       } finally {
-        if (submitBtn) submitBtn.disabled = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Submit Data';
+        }
       }
     });
 
