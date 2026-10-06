@@ -148,6 +148,63 @@
 
   </main>
 
+  <!-- Ingest Data Modal -->
+  <div id="ingestModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-indigo-400"></i>
+          Ingest New Observation
+        </h3>
+        <button id="closeModalBtn" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="ingestForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Institution Code *</label>
+          <input type="text" id="modalInst" placeholder="e.g. DISED" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Indicator Code *</label>
+          <input type="text" id="modalIndicator" placeholder="e.g. EMP_TOT" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Year *</label>
+            <input type="number" id="modalYear" placeholder="2026" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Value *</label>
+            <input type="number" id="modalValue" placeholder="12500" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Sex</label>
+            <select id="modalSex" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+              <option value="TOTAL">TOTAL</option>
+              <option value="MALE">MALE</option>
+              <option value="FEMALE">FEMALE</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Subdivision Code</label>
+            <input type="text" id="modalSubdivision" placeholder="DJ-DJ" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-700 flex justify-end space-x-3">
+          <button type="button" id="cancelModalBtn" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm text-slate-200">Cancel</button>
+          <button type="submit" id="submitIngestBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm text-white font-medium flex items-center gap-2">
+            <span>Submit Data</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- JavaScript Application Logic -->
   <script>
     const API_BASE_URL = 'https://free-lmis-api.onrender.com';
@@ -215,7 +272,7 @@
           <td class="py-3 px-4 font-mono text-xs text-indigo-400">${obs.institution_code || '-'}</td>
           <td class="py-3 px-4 font-semibold text-slate-200">${obs.indicator_code || '-'}</td>
           <td class="py-3 px-4 text-slate-300">${obs.year || '-'}</td>
-          <td class="py-3 px-4 font-bold text-white">${Number(obs.value).toLocaleString()}</td>
+          <td class="py-3 px-4 font-bold text-white">${Number(obs.value).toLocaleString('en-US')}</td>
           <td class="py-3 px-4 text-slate-400 text-xs">${obs.sex || 'TOTAL'}</td>
           <td class="py-3 px-4 text-slate-400 text-xs">${obs.subdivision_code || 'NATIONAL'}</td>
         </tr>
@@ -272,18 +329,16 @@
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-          y: { 
-            grid: { color: '#334155' }, 
-            ticks: { 
-              color: '#94a3b8',
-              callback: function(value) {
-                return value.toLocaleString('en-US');
+          scales: {
+            x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+            y: { 
+              grid: { color: '#334155' }, 
+              ticks: { 
+                color: '#94a3b8',
+                callback: function(value) { return value.toLocaleString('en-US'); }
+              } 
+            }
           }
-        } 
-      }
-    } 
         }
       });
     }
@@ -311,6 +366,58 @@
     document.getElementById('institutionFilter')?.addEventListener('change', applyFilters);
     document.getElementById('indicatorFilter')?.addEventListener('input', applyFilters);
     document.getElementById('yearFilter')?.addEventListener('input', applyFilters);
+
+    // 7. Modal Open & Close Event Listeners
+    const modal = document.getElementById('ingestModal');
+    const openModalBtn = document.getElementById('openModalBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+
+    function toggleModal(show) {
+      if (modal) {
+        if (show) modal.classList.remove('hidden');
+        else modal.classList.add('hidden');
+      }
+    }
+
+    if (openModalBtn) openModalBtn.addEventListener('click', () => toggleModal(true));
+    if (closeModalBtn) closeModalBtn.addEventListener('click', () => toggleModal(false));
+    if (cancelModalBtn) cancelModalBtn.addEventListener('click', () => toggleModal(false));
+
+    // 8. Handle Form Submission (POST to API)
+    document.getElementById('ingestForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('submitIngestBtn');
+      if (submitBtn) submitBtn.disabled = true;
+
+      const payload = {
+        institution_code: document.getElementById('modalInst').value.trim(),
+        indicator_code: document.getElementById('modalIndicator').value.trim(),
+        year: parseInt(document.getElementById('modalYear').value, 10),
+        value: parseFloat(document.getElementById('modalValue').value),
+        sex: document.getElementById('modalSex').value,
+        subdivision_code: document.getElementById('modalSubdivision').value.trim() || 'NATIONAL'
+      };
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/observations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error('Failed to submit data');
+
+        toggleModal(false);
+        document.getElementById('ingestForm').reset();
+        await fetchObservations(); // Refresh dashboard data
+      } catch (err) {
+        alert('Error submitting observation: ' + err.message);
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    });
 
     // Initial Load & Lucide Icon Initialization
     document.addEventListener('DOMContentLoaded', () => {
