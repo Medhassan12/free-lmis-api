@@ -1,365 +1,314 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Labour Market Information System (LMIS) Dashboard</title>
-
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- Google Fonts - Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Djibouti LMIS Dashboard</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
 
-    <!-- Navigation Header -->
-    <nav class="bg-slate-800/80 backdrop-blur-md border-b border-slate-700/60 sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <div class="bg-indigo-600 p-2 rounded-lg text-white">
-                        <i class="fa-solid fa-chart-line text-xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-lg font-bold text-white tracking-wide">Djibouti LMIS</h1>
-                        <p class="text-xs text-slate-400">National Labour Market Information System</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <button id="openIngestModalBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-lg shadow-indigo-600/20">
-                        <i class="fa-solid fa-plus"></i> Ingest Data
-                    </button>
-                </div>
-            </div>
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-indigo-600 rounded-lg text-white">
+          <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
         </div>
-    </nav>
-
-    <!-- Main Container -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-
-        <!-- Stat Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-xl">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Observations</p>
-                        <h3 id="statTotalObs" class="text-2xl font-bold text-white mt-1">--</h3>
-                    </div>
-                    <div class="p-3 bg-blue-500/10 text-blue-400 rounded-xl">
-                        <i class="fa-solid fa-database text-lg"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-xl">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Institutions</p>
-                        <h3 id="statTotalInst" class="text-2xl font-bold text-white mt-1">--</h3>
-                    </div>
-                    <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
-                        <i class="fa-solid fa-building text-lg"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-xl">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Latest Year</p>
-                        <h3 id="statLatestYear" class="text-2xl font-bold text-white mt-1">--</h3>
-                    </div>
-                    <div class="p-3 bg-purple-500/10 text-purple-400 rounded-xl">
-                        <i class="fa-solid fa-calendar text-lg"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-xl">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">API Status</p>
-                        <h3 id="statApiStatus" class="text-2xl font-bold text-emerald-400 mt-1">Connected</h3>
-                    </div>
-                    <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl">
-                        <i class="fa-solid fa-server text-lg"></i>
-                    </div>
-                </div>
-            </div>
+        <div>
+          <h1 class="text-xl font-bold text-white tracking-tight">Djibouti LMIS</h1>
+          <p class="text-xs text-slate-400">National Labour Market Information System</p>
         </div>
+      </div>
+      <button id="openModalBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center space-x-2 transition-colors shadow-lg shadow-indigo-600/20">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        <span>+ Ingest Data</span>
+      </button>
+    </div>
+  </header>
 
-        <!-- Filters Section -->
-        <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-4">
-            <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                <i class="fa-solid fa-filter text-indigo-400"></i> Filter Observations
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Institution</label>
-                    <select id="filterInstitution" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
-                        <option value="">All Institutions</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Indicator Code</label>
-                    <input type="text" id="filterIndicator" placeholder="e.g. EMP_TOT" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Year</label>
-                    <input type="number" id="filterYear" placeholder="e.g. 2024" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
-                </div>
-            </div>
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5 backdrop-blur flex justify-between items-center">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Observations</p>
+          <p id="totalObservations" class="text-2xl font-bold text-white mt-1">--</p>
         </div>
-
-        <!-- Visualizations / Chart -->
-        <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 shadow-xl space-y-4">
-            <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                <i class="fa-solid fa-chart-column text-indigo-400"></i> Observations Overview
-            </h2>
-            <div class="h-64 w-full">
-                <canvas id="lmisChart"></canvas>
-            </div>
+        <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-lg border border-indigo-500/20">
+          <i data-lucide="database" class="w-5 h-5"></i>
         </div>
+      </div>
 
-        <!-- Data Table -->
-        <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl shadow-xl overflow-hidden">
-            <div class="p-5 border-b border-slate-700/60 flex items-center justify-between">
-                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-table text-indigo-400"></i> Labor Market Observations
-                </h2>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-300">
-                    <thead class="bg-slate-900/50 text-xs text-slate-400 uppercase tracking-wider border-b border-slate-700/60">
-                        <tr>
-                            <th class="px-5 py-3">ID</th>
-                            <th class="px-5 py-3">Institution</th>
-                            <th class="px-5 py-3">Indicator</th>
-                            <th class="px-5 py-3">Year</th>
-                            <th class="px-5 py-3">Value</th>
-                            <th class="px-5 py-3">Gender</th>
-                        </tr>
-                    </thead>
-                    <tbody id="observationsTableBody" class="divide-y divide-slate-700/40">
-                        <tr>
-                            <td colspan="6" class="px-5 py-6 text-center text-slate-500">Loading observations...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="px-5 py-3 border-t border-slate-700/60 bg-slate-900/30">
-                <span id="recordCountText" class="text-xs text-slate-400">Showing 0 observations</span>
-            </div>
+      <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5 backdrop-blur flex justify-between items-center">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Institutions</p>
+          <p id="totalInstitutions" class="text-2xl font-bold text-white mt-1">--</p>
         </div>
-
-    </main>
-
-    <!-- Ingestion Modal -->
-    <div id="ingestModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-5">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-bold text-white">Ingest Observation Data</h3>
-                <button id="closeIngestModalBtn" class="text-slate-400 hover:text-white text-lg">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <form id="ingestForm" class="space-y-4">
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Institution Code</label>
-                    <input type="text" id="ingestInstCode" required placeholder="INSTAD / MASS" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200">
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Indicator Code</label>
-                    <input type="text" id="ingestIndicator" required placeholder="EMP_TOT" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200">
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Year</label>
-                    <input type="number" id="ingestYear" required placeholder="2024" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200">
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Value</label>
-                    <input type="number" step="any" id="ingestValue" required placeholder="12500" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200">
-                </div>
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Gender</label>
-                    <select id="ingestGender" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200">
-                        <option value="TOTAL">TOTAL</option>
-                        <option value="MALE">MALE</option>
-                        <option value="FEMALE">FEMALE</option>
-                    </select>
-                </div>
-                <div class="pt-2">
-                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-xl text-sm transition">
-                        Submit Data
-                    </button>
-                </div>
-            </form>
+        <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20">
+          <i data-lucide="building-2" class="w-5 h-5"></i>
         </div>
+      </div>
+
+      <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5 backdrop-blur flex justify-between items-center">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Latest Year</p>
+          <p id="latestYear" class="text-2xl font-bold text-white mt-1">--</p>
+        </div>
+        <div class="p-3 bg-purple-500/10 text-purple-400 rounded-lg border border-purple-500/20">
+          <i data-lucide="calendar" class="w-5 h-5"></i>
+        </div>
+      </div>
+
+      <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5 backdrop-blur flex justify-between items-center">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">API Status</p>
+          <div id="apiStatus" class="mt-1">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-slate-300">
+              Connecting...
+            </span>
+          </div>
+        </div>
+        <div class="p-3 bg-slate-700/30 text-slate-400 rounded-lg border border-slate-700/50">
+          <i data-lucide="activity" class="w-5 h-5"></i>
+        </div>
+      </div>
     </div>
 
-    <script>
-  const API_BASE_URL = 'https://free-lmis-api.onrender.com';
-  let allObservations = []; // Global variable storing the loaded API data
+    <!-- Filters Section -->
+    <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 backdrop-blur space-y-4">
+      <div class="flex items-center space-x-2 text-sm font-semibold text-slate-300">
+        <i data-lucide="filter" class="w-4 h-4 text-indigo-400"></i>
+        <span>Filter Observations</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Institution</label>
+          <select id="institutionFilter" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+            <option value="">All Institutions</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Indicator Code</label>
+          <input type="text" id="indicatorFilter" placeholder="e.g. EMP_TOT" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Year</label>
+          <input type="text" id="yearFilter" placeholder="e.g. 2024" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+        </div>
+      </div>
+    </div>
 
-  // 1. Fetch data on page load
-  async function fetchObservations() {
-    try {
-      const response = await fetch(`${API_BASE_URL}/observations`);
-      const data = await response.json();
+    <!-- Chart Section -->
+    <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5 backdrop-blur">
+      <div class="flex items-center space-x-2 text-sm font-semibold text-slate-300 mb-4">
+        <i data-lucide="line-chart" class="w-4 h-4 text-indigo-400"></i>
+        <span>Observations Overview</span>
+      </div>
+      <div class="h-64">
+        <canvas id="observationsChart"></canvas>
+      </div>
+    </div>
 
-      if (data && Array.isArray(data)) {
-        allObservations = data;
-        renderTable(allObservations);
-        updateStats(allObservations);
-        renderChart(allObservations);
-        populateInstitutionFilter(allObservations);
-        
-        // Update API status indicator
-        document.getElementById('apiStatus').innerHTML = `
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            Connected
-          </span>`;
-      }
-    } catch (err) {
-      console.warn("Backend API offline or unreachable", err);
-      document.getElementById('observationsTableBody').innerHTML = 
-        `<tr><td colspan="6" class="text-center py-4 text-slate-400">Unable to load observations from API.</td></tr>`;
-      document.getElementById('apiStatus').innerHTML = `
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">
-          Disconnected
-        </span>`;
-    }
-  }
+    <!-- Table Section -->
+    <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl backdrop-blur overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-700/50 flex justify-between items-center">
+        <div class="flex items-center space-x-2 text-sm font-semibold text-slate-300">
+          <i data-lucide="table" class="w-4 h-4 text-indigo-400"></i>
+          <span>Labor Market Observations</span>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="bg-slate-900/60 text-xs uppercase text-slate-400 border-b border-slate-700/50">
+            <tr>
+              <th class="py-3 px-4 font-semibold">Institution</th>
+              <th class="py-3 px-4 font-semibold">Indicator</th>
+              <th class="py-3 px-4 font-semibold">Year</th>
+              <th class="py-3 px-4 font-semibold">Value</th>
+              <th class="py-3 px-4 font-semibold">Sex</th>
+              <th class="py-3 px-4 font-semibold">Subdivision</th>
+            </tr>
+          </thead>
+          <tbody id="observationsTableBody" class="divide-y divide-slate-800">
+            <tr>
+              <td colspan="6" class="text-center py-6 text-slate-400">Loading observations...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-  // 2. Dynamic Dropdown Population
-  function populateInstitutionFilter(data) {
-    const select = document.getElementById('institutionFilter');
-    if (!select) return;
+  </main>
 
-    // Extract unique institution codes
-    const institutions = [...new Set(data.map(item => item.institution_code).filter(Boolean))];
-    
-    select.innerHTML = `<option value="">All Institutions</option>` + 
-      institutions.map(inst => `<option value="${inst}">${inst}</option>`).join('');
-  }
+  <!-- JavaScript Application Logic -->
+  <script>
+    const API_BASE_URL = 'https://free-lmis-api.onrender.com';
+    let allObservations = [];
 
-  // 3. Render Observations Table
-  function renderTable(data) {
-    const tbody = document.getElementById('observationsTableBody');
-    if (!tbody) return;
+    // 1. Fetch Observations from API
+    async function fetchObservations() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/observations`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-    if (data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-slate-400">No matching observations found.</td></tr>`;
-      return;
-    }
+        const data = await response.json();
 
-    tbody.innerHTML = data.map(obs => `
-      <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
-        <td class="py-3 px-4 font-mono text-xs text-indigo-400">${obs.institution_code || '-'}</td>
-        <td class="py-3 px-4 font-semibold text-slate-200">${obs.indicator_code || '-'}</td>
-        <td class="py-3 px-4 text-slate-300">${obs.year || '-'}</td>
-        <td class="py-3 px-4 font-bold text-white">${Number(obs.value).toLocaleString()}</td>
-        <td class="py-3 px-4 text-slate-400 text-xs">${obs.sex || 'TOTAL'}</td>
-        <td class="py-3 px-4 text-slate-400 text-xs">${obs.subdivision_code || 'NATIONAL'}</td>
-      </tr>
-    `).join('');
-  }
+        if (data && Array.isArray(data)) {
+          allObservations = data;
+          renderTable(allObservations);
+          updateStats(allObservations);
+          if (typeof Chart !== 'undefined') renderChart(allObservations);
+          populateInstitutionFilter(allObservations);
 
-  // 4. Update Summary Stat Cards
-  function updateStats(data) {
-    const totalObs = document.getElementById('totalObservations');
-    const totalInst = document.getElementById('totalInstitutions');
-    const latestYr = document.getElementById('latestYear');
-
-    if (totalObs) totalObs.textContent = data.length;
-    if (totalInst) {
-      const uniqueInsts = new Set(data.map(d => d.institution_code).filter(Boolean));
-      totalInst.textContent = uniqueInsts.size;
-    }
-    if (latestYr) {
-      const years = data.map(d => Number(d.year)).filter(Boolean);
-      latestYr.textContent = years.length > 0 ? Math.max(...years) : '-';
-    }
-  }
-
-  // 5. Update Chart.js Visualization
-  let myChart = null;
-  function renderChart(data) {
-    const ctx = document.getElementById('observationsChart')?.getContext('2d');
-    if (!ctx) return;
-
-    // Group values by year
-    const yearTotals = {};
-    data.forEach(item => {
-      const yr = item.year || 'Unknown';
-      yearTotals[yr] = (yearTotals[yr] || 0) + Number(item.value || 0);
-    });
-
-    const labels = Object.keys(yearTotals).sort();
-    const chartValues = labels.map(yr => yearTotals[yr]);
-
-    if (myChart) myChart.destroy(); // Destroy previous instance to re-render
-
-    myChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Total Value by Year',
-          data: chartValues,
-          backgroundColor: '#6366f1',
-          borderRadius: 6
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-          y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+          const statusEl = document.getElementById('apiStatus');
+          if (statusEl) {
+            statusEl.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Connected</span>`;
+          }
+        }
+      } catch (err) {
+        console.error("API Fetch Error:", err);
+        const tbody = document.getElementById('observationsTableBody');
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">Unable to load observations from API. Check browser console for details.</td></tr>`;
+        }
+        const statusEl = document.getElementById('apiStatus');
+        if (statusEl) {
+          statusEl.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20">Disconnected</span>`;
         }
       }
+    }
+
+    // 2. Populate Dropdown Options
+    function populateInstitutionFilter(data) {
+      const select = document.getElementById('institutionFilter');
+      if (!select) return;
+
+      const currentVal = select.value;
+      const institutions = [...new Set(data.map(item => item.institution_code).filter(Boolean))];
+
+      select.innerHTML = `<option value="">All Institutions</option>` +
+        institutions.map(inst => `<option value="${inst}">${inst}</option>`).join('');
+
+      select.value = currentVal;
+    }
+
+    // 3. Render Table Rows
+    function renderTable(data) {
+      const tbody = document.getElementById('observationsTableBody');
+      if (!tbody) return;
+
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">No matching observations found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = data.map(obs => `
+        <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+          <td class="py-3 px-4 font-mono text-xs text-indigo-400">${obs.institution_code || '-'}</td>
+          <td class="py-3 px-4 font-semibold text-slate-200">${obs.indicator_code || '-'}</td>
+          <td class="py-3 px-4 text-slate-300">${obs.year || '-'}</td>
+          <td class="py-3 px-4 font-bold text-white">${Number(obs.value).toLocaleString()}</td>
+          <td class="py-3 px-4 text-slate-400 text-xs">${obs.sex || 'TOTAL'}</td>
+          <td class="py-3 px-4 text-slate-400 text-xs">${obs.subdivision_code || 'NATIONAL'}</td>
+        </tr>
+      `).join('');
+    }
+
+    // 4. Update KPI Counters
+    function updateStats(data) {
+      const totalObs = document.getElementById('totalObservations');
+      const totalInst = document.getElementById('totalInstitutions');
+      const latestYr = document.getElementById('latestYear');
+
+      if (totalObs) totalObs.textContent = data.length;
+      if (totalInst) {
+        const uniqueInsts = new Set(data.map(d => d.institution_code).filter(Boolean));
+        totalInst.textContent = uniqueInsts.size;
+      }
+      if (latestYr) {
+        const years = data.map(d => Number(d.year)).filter(Boolean);
+        latestYr.textContent = years.length > 0 ? Math.max(...years) : '-';
+      }
+    }
+
+    // 5. Render Chart.js
+    let myChart = null;
+    function renderChart(data) {
+      const canvas = document.getElementById('observationsChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      const yearTotals = {};
+      data.forEach(item => {
+        const yr = item.year || 'Unknown';
+        yearTotals[yr] = (yearTotals[yr] || 0) + Number(item.value || 0);
+      });
+
+      const labels = Object.keys(yearTotals).sort();
+      const chartValues = labels.map(yr => yearTotals[yr]);
+
+      if (myChart) myChart.destroy();
+
+      myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Total Value by Year',
+            data: chartValues,
+            backgroundColor: '#6366f1',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+          }
+        }
+      });
+    }
+
+    // 6. Filter Event Logic
+    function applyFilters() {
+      const instVal = document.getElementById('institutionFilter')?.value || '';
+      const indicatorVal = document.getElementById('indicatorFilter')?.value.toLowerCase().trim() || '';
+      const yearVal = document.getElementById('yearFilter')?.value.trim() || '';
+
+      const filtered = allObservations.filter(obs => {
+        const matchInst = !instVal || obs.institution_code === instVal;
+        const matchIndicator = !indicatorVal || (obs.indicator_code && obs.indicator_code.toLowerCase().includes(indicatorVal));
+        const matchYear = !yearVal || String(obs.year) === yearVal;
+
+        return matchInst && matchIndicator && matchYear;
+      });
+
+      renderTable(filtered);
+      updateStats(filtered);
+      if (typeof Chart !== 'undefined') renderChart(filtered);
+    }
+
+    // Attach Filter Event Listeners
+    document.getElementById('institutionFilter')?.addEventListener('change', applyFilters);
+    document.getElementById('indicatorFilter')?.addEventListener('input', applyFilters);
+    document.getElementById('yearFilter')?.addEventListener('input', applyFilters);
+
+    // Initial Load & Lucide Icon Initialization
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchObservations();
+      if (window.lucide) lucide.createIcons();
     });
-  }
-
-  // 6. Filter Functionality Event Listener
-  function applyFilters() {
-    const instVal = document.getElementById('institutionFilter')?.value || '';
-    const indicatorVal = document.getElementById('indicatorFilter')?.value.toLowerCase().trim() || '';
-    const yearVal = document.getElementById('yearFilter')?.value.trim() || '';
-
-    const filtered = allObservations.filter(obs => {
-      const matchInst = !instVal || obs.institution_code === instVal;
-      const matchIndicator = !indicatorVal || (obs.indicator_code && obs.indicator_code.toLowerCase().includes(indicatorVal));
-      const matchYear = !yearVal || String(obs.year) === yearVal;
-
-      return matchInst && matchIndicator && matchYear;
-    });
-
-    renderTable(filtered);
-    updateStats(filtered);
-    renderChart(filtered);
-  }
-
-  // Attach event listeners to filter controls
-  document.getElementById('institutionFilter')?.addEventListener('change', applyFilters);
-  document.getElementById('indicatorFilter')?.addEventListener('input', applyFilters);
-  document.getElementById('yearFilter')?.addEventListener('input', applyFilters);
-
-  // Initial load
-  document.addEventListener('DOMContentLoaded', fetchObservations);
-</script>
+  </script>
 </body>
 </html>
