@@ -27,7 +27,7 @@
       </div>
       <button id="openModalBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center space-x-2 transition-colors shadow-lg shadow-indigo-600/20">
         <i data-lucide="plus" class="w-4 h-4"></i>
-        <span>+ Ingest Data</span>
+        <span>Ingest Data</span>
       </button>
     </div>
   </header>
@@ -272,10 +272,18 @@
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+        scales: {
+          x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+          y: { 
+            grid: { color: '#334155' }, 
+            ticks: { 
+              color: '#94a3b8',
+              callback: function(value) {
+                return value.toLocaleString('en-US');
           }
+        } 
+      }
+    } 
         }
       });
     }
